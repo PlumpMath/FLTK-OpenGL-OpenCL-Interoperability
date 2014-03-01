@@ -42,6 +42,7 @@ void MyWindow::draw() {
 int MyWindow::handle(int event) {
     if(event == FL_KEYBOARD) {
         PRINT("Key pressed in window " << id);
+        this->redraw();
     }
 }
 
