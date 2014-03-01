@@ -7,7 +7,10 @@
 
 #include "OpenCLManager.hpp"
 
+#include <boost/thread.hpp>
+
 #include <iostream>
+#include <stdlib.h>
 
 #define PRINT(x) std::cout << x << std::endl;
 
@@ -15,7 +18,7 @@ class MyWindow : public Fl_Gl_Window {
     void draw();
     int handle(int);
     int id;
-    oul::Context &context;
+    oul::Context context;
     cl::Image3D clImage;
     GLuint texture;
 #if defined(CL_VERSION_1_2)
@@ -25,14 +28,14 @@ class MyWindow : public Fl_Gl_Window {
 #endif
     int sliceNr;
 public:
-    MyWindow(int X, int Y, int W, int H, const char *L, int id, oul::Context &contex, cl::Image3D image);
+    MyWindow(int X, int Y, int W, int H, const char *L, int id, oul::Context contex, cl::Image3D image);
     static GLXContext glContext;
 };
 
 GLXContext MyWindow::glContext = NULL;
 
 
-MyWindow::MyWindow(int X, int Y, int W, int H, const char *L, int id, oul::Context &context, cl::Image3D image)
+MyWindow::MyWindow(int X, int Y, int W, int H, const char *L, int id, oul::Context context, cl::Image3D image)
         : Fl_Gl_Window(X, Y, W, H, L),id(id),context(context),clImage(image) {
     sliceNr = 120;
 
@@ -125,8 +128,18 @@ int MyWindow::handle(int event) {
     }
 }
 
+boost::thread * thread = NULL;
+
+void quit(void) {
+    PRINT("quit called")
+    if(thread != NULL)
+        thread->join();
+}
+
 int main(int argc, char ** argv) {
 
+    if(atexit(quit) != 0)
+        PRINT("atexit() failed")
     // Create GL context
     int sngBuf[] = { GLX_RGBA,
                      GLX_DOUBLEBUFFER,
@@ -161,11 +174,14 @@ int main(int argc, char ** argv) {
             400,400,400
     );
 
-    MyWindow window1(0,0,400,400,"Window 1", 1, context,clImage);
-    window1.show();
+    MyWindow *window1 = new MyWindow(0,0,400,400,"Window 1", 1, context,clImage);
+    window1->show();
 
-    MyWindow window2(400,0,400,400,"Window 2", 2, context,clImage);
-    window2.show();
+    MyWindow *window2 = new MyWindow(400,0,400,400,"Window 2", 2, context,clImage);
+    window2->show();
 
-    return Fl::run();
+    // Test if the main loop can be run in a separate thread
+    thread = new boost::thread(Fl::run);
+
+    return 0;
 }
