@@ -4,6 +4,9 @@
 #include <FL/gl.h>
 #include <FL/Fl_Gl_Window.H>
 #include <GL/glx.h>
+
+#include "OpenCLManager.hpp"
+
 #include <iostream>
 
 #define PRINT(x) std::cout << x << std::endl;
@@ -58,12 +61,23 @@ int main(int argc, char ** argv) {
                      None
     };
     Display * display = XOpenDisplay(0);
+    PRINT("display is " << display)
     XVisualInfo* vi = glXChooseVisual(display, DefaultScreen(display), sngBuf);
 
     MyWindow::glContext = glXCreateContext(display, vi, 0, GL_TRUE);
+    PRINT("created GL context with ID " << MyWindow::glContext)
 
-    MyWindow window(0,0,400,400,"Window 1", 1);
-    window.show(argc,argv);
+    // Create OpenCL context
+    oul::DeviceCriteria criteria;
+    criteria.setTypeCriteria(oul::DEVICE_TYPE_GPU);
+    criteria.setDeviceCountCriteria(1);
+    criteria.setCapabilityCriteria(oul::DEVICE_CAPABILITY_OPENGL_INTEROP);
+    oul::OpenCLManager * manager = oul::OpenCLManager::getInstance();
+    oul::Context context = manager->createContext(criteria, (unsigned long *)(MyWindow::glContext));
+
+
+    MyWindow window1(0,0,400,400,"Window 1", 1);
+    window1.show(argc,argv);
 
     MyWindow window2(400,0,400,400,"Window 2", 2);
     window2.show(argc,argv);

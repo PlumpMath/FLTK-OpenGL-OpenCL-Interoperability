@@ -1,0 +1,3 @@
+[submodule "OpenCLUtilityLibrary"]
+	path = OpenCLUtilityLibrary
+	url = http://github.com/smistad/OpenCLUtilityLibrary.git
